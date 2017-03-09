@@ -2,3 +2,4 @@
 
 ## Gruppemedlemmer
 - Kristoffer Opsahl
+- Sigbjørn Skauge
