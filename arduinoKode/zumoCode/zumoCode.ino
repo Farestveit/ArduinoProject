@@ -6,8 +6,8 @@ const int echoPin = 2;
 const int triggerPin = 3;
 const int LED_PIN = 13;
 
-float distance = 0;
-
+float distance = 0; // Store ultraSound measurements here to prevent delays jamming nav.
+int edgy = 0; // Tracking variable for edge-detection.
 
  
 void setup() {
@@ -19,9 +19,15 @@ void setup() {
  
  
 void loop() {
-  distance = getDistance();
-  
-  // TODO: Implementer logikk for å snu hvis teip.
+	distance = getDistance();
+	edgy = edgeDetection();
+
+	if (edgy) {
+		// Rygg unna kanten.
+		setSpeed(-400,-400);
+		delay(500);
+		edgy = 0; // Reset tracking variable after maneuvre.
+	};
   
   if (distance < 1) {
     // Fiende klokken tolv. Angrip!
@@ -34,6 +40,11 @@ void loop() {
     setSpeed(200, -200);
   };
   delay(10);
+};
+
+int edgeDetection() {
+	// TOTO: Implementer logikk for å oppdage kant.
+	return 0;
 };
 
 float getDistance() {
