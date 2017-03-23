@@ -1,10 +1,33 @@
 #include <ZumoMotors.h>
+#include <SoftwareSerial.h>
+#include <PLabBTSerial.h>
+#include <PLab_ZumoMotors.h>
+#include <Pushbutton.h>
+#include <QTRSensors.h>
+#include <ZumoReflectanceSensorArray.h>
 
 ZumoMotors motors;
 
-const int echoPin = 2;
+#define REVERSE_SPEED     200 // 0 is stopped, 400 is full speed
+#define TURN_SPEED        200
+#define FORWARD_SPEED     100
+#define REVERSE_DURATION  200 // ms
+#define TURN_DURATION     300 // ms
+
+
+const int echoPin = 6;
 const int triggerPin = 3;
 const int LED_PIN = 13;
+Pushbutton button(ZUMO_BUTTON); // pushbutton on pin 12
+
+
+// edge ---------------
+
+#define NUM_SENSORS 6
+unsigned int sensor_values[NUM_SENSORS];
+ 
+ZumoReflectanceSensorArray sensors;
+// --------------------
 
 float distance = 0; // Store ultraSound measurements here to prevent delays jamming nav.
 int edgy = 0; // Tracking variable for edge-detection.
@@ -12,6 +35,12 @@ int edgy = 0; // Tracking variable for edge-detection.
  
 void setup() {
   Serial.begin(9600);
+  button.waitForButton();
+
+  
+  sensors.init();
+
+  
   pinMode(LED_PIN, OUTPUT);
   pinMode(triggerPin, OUTPUT);
   pinMode(echoPin, INPUT);
@@ -19,17 +48,22 @@ void setup() {
  
  
 void loop() {
-	distance = getDistance();
-	edgy = edgeDetection();
+  distance = getDistance();
+  edgy = edgeDetection();
+  sensors.read(sensor_values);
 
-	if (edgy) {
-		// Rygg unna kanten.
-		setSpeed(-400,-400);
-		delay(500);
-		edgy = 0; // Reset tracking variable after maneuvre.
-	};
+  if (edgy) {
+    // Rygg unna kanten.
+    setSpeed(-400,-400);
+    delay(150);
+    edgy = 0; // Reset tracking variable after maneuvre.
+    ledLight(1);
+  }
+  else{
+    ledLight(0);
+  };
   
-  if (distance < 1) {
+  if (distance < 0.6) {
     // Fiende klokken tolv. Angrip!
     ledLight(1);
     setSpeed(400, 400);
@@ -43,8 +77,16 @@ void loop() {
 };
 
 int edgeDetection() {
-	// TOTO: Implementer logikk for å oppdage kant.
-	return 0;
+  // venstre: sensor_values[0]
+  // høyre: sensor_values[5]
+  if (sensor_values[0] < 10 ||sensor_values[5] < 10)
+  {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+  
 };
 
 float getDistance() {
